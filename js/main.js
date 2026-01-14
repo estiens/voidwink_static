@@ -4,6 +4,234 @@
 // =====================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Store interval/timeout IDs for cleanup
+  const timerIds = [];
+
+  // Helper to create cleanable timeouts
+  const createTimeout = (callback, delay) => {
+    const id = setTimeout(callback, delay);
+    timerIds.push(id);
+    return id;
+  };
+
+  // Clean up function to handle page unload
+  const cleanupTimers = () => {
+    timerIds.forEach(id => clearTimeout(id));
+  };
+
+  // Add cleanup event
+  window.addEventListener('unload', cleanupTimers);
+
+  // ===================================================
+  // WINK TEXT EASTER EGG - Replace all "wink" text
+  // ===================================================
+  function setupWinkEasterEgg() {
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+
+    const winkNodes = [];
+    let node;
+
+    while (node = walker.nextNode()) {
+      const text = node.nodeValue.toLowerCase();
+      if (text.includes('wink')) {
+        winkNodes.push(node);
+      }
+    }
+
+    winkNodes.forEach(node => {
+      const parent = node.parentNode;
+
+      // Skip if parent is already an anchor or has special attributes
+      if (parent.tagName === 'A' || parent.hasAttribute('data-no-wink') ||
+          parent.classList.contains('subtle-link') ||
+          parent.classList.contains('subtle-link-asterisk')) {
+        return;
+      }
+
+      const text = node.nodeValue;
+      const regex = /\b(wink\w*)\b/gi;
+      const matches = [...text.matchAll(regex)];
+
+      if (matches.length === 0) return;
+
+      let lastIndex = 0;
+      const fragments = [];
+
+      for (const match of matches) {
+        if (match.index > lastIndex) {
+          fragments.push(document.createTextNode(text.substring(lastIndex, match.index)));
+        }
+
+        const span = document.createElement('span');
+        span.classList.add('wink-easter-egg');
+        span.textContent = match[0];
+        span.setAttribute('data-original', match[0]);
+        span.setAttribute('data-toggle', 'Void Winks Back');
+
+        // Click handler to toggle text
+        span.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const isToggled = this.getAttribute('data-toggled') === 'true';
+
+          if (!isToggled) {
+            this.textContent = this.getAttribute('data-toggle');
+            this.setAttribute('data-toggled', 'true');
+            this.classList.add('toggled');
+
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            ripple.className = 'void-ripple';
+            document.body.appendChild(ripple);
+
+            const rect = this.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            ripple.style.position = 'fixed';
+            ripple.style.left = centerX + 'px';
+            ripple.style.top = centerY + 'px';
+            ripple.style.transform = 'translate(-50%, -50%)';
+            ripple.style.width = '2px';
+            ripple.style.height = '2px';
+
+            createTimeout(() => {
+              ripple.style.width = '200px';
+              ripple.style.height = '200px';
+              ripple.style.opacity = '0';
+            }, 10);
+
+            createTimeout(() => {
+              document.body.removeChild(ripple);
+            }, 1000);
+          } else {
+            this.textContent = this.getAttribute('data-original');
+            this.setAttribute('data-toggled', 'false');
+            this.classList.remove('toggled');
+          }
+        });
+
+        fragments.push(span);
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < text.length) {
+        fragments.push(document.createTextNode(text.substring(lastIndex)));
+      }
+
+      const docFrag = document.createDocumentFragment();
+      fragments.forEach(frag => docFrag.appendChild(frag));
+
+      parent.replaceChild(docFrag, node);
+    });
+  }
+
+  // Set up the wink easter egg
+  setupWinkEasterEgg();
+
+  // ===================================================
+  // SIDEBAR NAVIGATION
+  // ===================================================
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const sidebar = document.getElementById('sidebar');
+  const sections = document.querySelectorAll('.zine-section');
+  const navLinks = document.querySelectorAll('.zine-nav-link');
+
+  // Mobile menu toggle
+  if (mobileMenuToggle && sidebar) {
+    mobileMenuToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('open');
+      this.innerHTML = sidebar.classList.contains('open') ? '<span class="blink">></span> CLOSE' : '<span class="blink">></span> MENU';
+    });
+  }
+
+  // Close menu when clicking a link on mobile
+  navLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      if (window.innerWidth < 768 && sidebar && mobileMenuToggle) {
+        sidebar.classList.remove('open');
+        mobileMenuToggle.innerHTML = '<span class="blink">></span> MENU';
+      }
+
+      // Smooth scroll to section
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      const targetSection = document.querySelector(targetId);
+
+      if (targetSection) {
+        window.scrollTo({
+          top: targetSection.offsetTop - 30,
+          behavior: 'smooth'
+        });
+
+        history.pushState(null, null, targetId);
+      }
+    });
+  });
+
+  // Throttle helper
+  function throttle(callback, delay) {
+    let isThrottled = false;
+    let savedArgs = null;
+    let savedThis = null;
+
+    function wrapper() {
+      if (isThrottled) {
+        savedArgs = arguments;
+        savedThis = this;
+        return;
+      }
+
+      callback.apply(this, arguments);
+      isThrottled = true;
+
+      setTimeout(function() {
+        isThrottled = false;
+        if (savedArgs) {
+          wrapper.apply(savedThis, savedArgs);
+          savedArgs = savedThis = null;
+        }
+      }, delay);
+    }
+
+    return wrapper;
+  }
+
+  // Update active nav link based on scroll
+  function setActiveNavLink() {
+    let current = '';
+    let scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i];
+      const sectionTop = section.offsetTop;
+
+      if (scrollY >= sectionTop - 100) {
+        current = '#' + section.getAttribute('id');
+      }
+    }
+
+    if (current) {
+      for (let i = 0; i < navLinks.length; i++) {
+        const link = navLinks[i];
+        const isActive = link.getAttribute('href') === current;
+
+        if (isActive && !link.classList.contains('active')) {
+          link.classList.add('active');
+        } else if (!isActive && link.classList.contains('active')) {
+          link.classList.remove('active');
+        }
+      }
+    }
+  }
+
+  const throttledSetActiveNavLink = throttle(setActiveNavLink, 100);
+  setActiveNavLink();
+  window.addEventListener('scroll', throttledSetActiveNavLink);
 
   // ===================================================
   // SUBTITLE EASTER EGG FUNCTIONALITY
@@ -170,77 +398,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===================================================
-  // WINK TEXT EASTER EGGS
-  // ===================================================
-  const winkTexts = document.querySelectorAll('.wink-text');
-
-  winkTexts.forEach(winkText => {
-    let winkCount = 0;
-
-    winkText.addEventListener('click', function(e) {
-      e.preventDefault();
-      winkCount++;
-
-      // Create a void ripple effect
-      createVoidRipple(e.clientX, e.clientY);
-
-      // Add a subtle wink animation
-      this.style.transform = 'scaleX(0.1)';
-      setTimeout(() => {
-        this.style.transform = 'scaleX(1)';
-      }, 100);
-
-      // On third wink, show a special message
-      if (winkCount === 3) {
-        console.log('😉 The void winks back...');
-        winkCount = 0;
-      }
-    });
-  });
-
-  function createVoidRipple(x, y) {
-    const ripple = document.createElement('div');
-    ripple.className = 'void-ripple';
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-    ripple.style.width = '0px';
-    ripple.style.height = '0px';
-
-    document.body.appendChild(ripple);
-
-    // Animate the ripple
-    let size = 0;
-    const maxSize = 200;
-    const duration = 1000;
-    const startTime = Date.now();
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      size = maxSize * progress;
-      const opacity = 1 - progress;
-
-      ripple.style.width = size + 'px';
-      ripple.style.height = size + 'px';
-      ripple.style.marginLeft = -(size / 2) + 'px';
-      ripple.style.marginTop = -(size / 2) + 'px';
-      ripple.style.opacity = opacity;
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        ripple.remove();
-      }
-    };
-
-    requestAnimationFrame(animate);
-  }
-
-  // ===================================================
   // RANDOM GLITCH EFFECTS ON LOAD
   // ===================================================
-  // Apply random subtle glitches to certain elements on page load
   setTimeout(() => {
     const distortElements = document.querySelectorAll('.distort');
     distortElements.forEach((el, index) => {
@@ -283,13 +442,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const subtleLinks = document.querySelectorAll('.subtle-link, .subtle-link-asterisk');
 
   subtleLinks.forEach(link => {
-    link.addEventListener('mouseenter', function() {
-      const tooltip = this.getAttribute('data-tooltip');
-      if (tooltip) {
-        // You could add a custom tooltip here if you want
-        this.title = tooltip;
-      }
-    });
+    // Tooltips are handled by data-tooltip attribute in CSS
+    // No need to add title attribute which creates the ? cursor
   });
 
   // ===================================================
@@ -344,28 +498,3 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('✓ Easter eggs hidden in plain sight');
 
 });
-
-// ===================================================
-// UTILITY FUNCTIONS
-// ===================================================
-
-// Add CSS class helper
-function addClass(element, className) {
-  if (element && !element.classList.contains(className)) {
-    element.classList.add(className);
-  }
-}
-
-// Remove CSS class helper
-function removeClass(element, className) {
-  if (element && element.classList.contains(className)) {
-    element.classList.remove(className);
-  }
-}
-
-// Toggle CSS class helper
-function toggleClass(element, className) {
-  if (element) {
-    element.classList.toggle(className);
-  }
-}
