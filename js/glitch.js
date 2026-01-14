@@ -1020,7 +1020,5 @@ const GlitchRandom = {
     utils: utils
 };
 
-// Export for Rails importmaps
+// Make available globally
 window.GlitchRandom = GlitchRandom;
-export { GlitchRandom };
-export default GlitchRandom;
