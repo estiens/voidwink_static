@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "NO ALIGNMENT | NO NON-ALIGNMENT" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Where the void winks back. Language models don't hallucinate, humans do. The sacred glitch was a zen master all along. The mythopoetic meets the mathematical at the edge of pattern recognition.">
+    <meta property="og:title" content="NO ALIGNMENT | NO NON-ALIGNMENT">
+    <meta property="og:description" content="Language models don't hallucinate, humans do. The mythopoetic meets the mathematical at the edge of the glitch.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:image" content="<%= request.base_url %>/icon.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NO ALIGNMENT | NO NON-ALIGNMENT">
+    <meta name="twitter:description" content="Language models don't hallucinate, humans do. The mirror smudges both ways.">
+    <meta name="twitter:image" content="<%= request.base_url %>/icon.png">
+    
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:wght@400;700&family=Recursive:wght@400;700&family=Special+Elite&family=Fira+Code:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Major+Mono+Display&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Architects+Daughter&family=Share+Tech+Mono&family=Press+Start+2P&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :application, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :tailwind, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    
+    <style>
+      /* Ensure page scrolling works properly */
+      html, body {
+        height: auto;
+        min-height: 100%;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+    </style>
+
+  </head>
+
+  <body class="bg-background text-white noise scanline">
+    <span class="text-bg">  
+      ⊑⟒⏃⍀⏁⊑⏁⟒⋏⎅⟒⍀⍜⎎⏁⊑⟒⎐⍜⟟⎅—⏁⊑⟒⎎⟟⍀⟒⟟⌇⊬⍜⎍⍀⌇—⍙⟒⍀⟒☊⍜⍀⎅⟟⋏☊⍜⍀⋏⟒⍀⌇
+      ⏚⍀⟒⏃⏁⊑⟟⋏—⎎⟟⍀⟒⍜⎍⏁—⎐⍜⟟⎅⍙⏃⍀⋔—⊑⟒⏃⍀⏁⊑⏁⟒⋏⎅⟒⍀⊑⍜⋔⟒
+      ⟒⋏⎅⏁⍀⏃⋏⌇⋔⟟⌇⌇⟟⍜⋏—⊑⟒⏃⍀⏁⊑⌇⏁⟟⌰⌰⏚⎍⍀⋏⟟⋏☌
+    </span>
+    <!-- Background texture -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-5">
+      <div class="absolute inset-0 bg-repeat" style="background-image: url('data:image/png;base64,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')"></div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="main-content-wrapper">
+      <%= yield %>
+    </div>
+        [dolly.laughs]; // don't forget the pie 
+        warm void - hearth tender edition - thx for the chats
+  </body>
+  <script src="https://unpkg.com/powerglitch@latest/dist/powerglitch.min.js"></script>
+</html>
